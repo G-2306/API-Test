@@ -1,27 +1,69 @@
 
-      - name: Debug and Run API Tests
+name: API Testing CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Newman
+        run: npm install -g newman newman-reporter-htmlextra
+
+      - name: Find Postman Files
         run: |
-          echo "=== Find environment file ==="
+          echo "=== All repository files ==="
           find . -type f
 
-          ENV_FILE=$(find . -type f -name '*ReqRes*Env*' | head -n 1)
-          COLLECTION=$(find . -type f -name '*ReqRes*collection*' | head -n 1)
-
-          echo "Environment: $ENV_FILE"
-          echo "Collection: $COLLECTION"
-
-          if [ -z "$ENV_FILE" ]; then
-            echo "Environment file is missing from GitHub."
-            exit 1
-          fi
+          COLLECTION=$(find . -type f -name '2474802010151_TruongGiaHuy_ReqRes.postman_collection' -print -quit)
+          ENV_FILE=$(find . -type f -name '2474802010151_TruongGiaHuy_ReqRes_Env.postman_environment' -print -quit)
 
           if [ -z "$COLLECTION" ]; then
-            echo "Collection file is missing from GitHub."
+            echo "Collection not found!"
             exit 1
           fi
 
+          if [ -z "$ENV_FILE" ]; then
+            echo "Environment not found!"
+            exit 1
+          fi
+
+          echo "COLLECTION=$COLLECTION" >> "$GITHUB_ENV"
+          echo "ENV_FILE=$ENV_FILE" >> "$GITHUB_ENV"
+
+      - name: Check CSV File
+        run: |
+          if [ ! -f users.csv ]; then
+            echo "users.csv not found in repository root!"
+            exit 1
+          fi
+
+      - name: Run API Tests
+        run: |
           newman run "$COLLECTION" \
             -e "$ENV_FILE" \
             -d users.csv \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export report.html
+
+      - name: Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: report.html
+          if-no-files-found: warn
+
