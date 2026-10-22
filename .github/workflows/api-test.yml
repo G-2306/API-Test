@@ -1,4 +1,3 @@
-
 name: API Testing CI
 
 on:
@@ -27,6 +26,7 @@ jobs:
         run: |
           newman run "2474802010151_TruongGiaHuy_ReqRes.postman_collection.json" \
             -e "2474802010151_TruongGiaHuy_ReqRes_Env.postman_environment.json" \
+            --env-var "baseUrl=https://reqres.in" \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export report.html
 
