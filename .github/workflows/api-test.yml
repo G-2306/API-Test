@@ -25,8 +25,8 @@ jobs:
 
       - name: Run API Tests
         run: |
-          newman run ReqRes_Collection.json \
-            -e ReqRes_Environment.json \
+          newman run "2474802010151_TruongGiaHuy_ReqRes.postman_collection" \
+            -e "2474802010151_TruongGiaHuy_ReqRes_Env.postman_environment" \
             -d users.csv \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export report.html
