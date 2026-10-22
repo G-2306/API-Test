@@ -1,4 +1,3 @@
-
 name: API Testing CI
 
 on:
@@ -23,16 +22,37 @@ jobs:
       - name: Install Newman
         run: npm install -g newman newman-reporter-htmlextra
 
-      - name: Check files
+      - name: Find files
         run: |
           echo "Files in repository:"
-          ls -la
-          find . -maxdepth 3 -type f
+          find . -type f
 
       - name: Run API Tests
         run: |
-          newman run "2474802010151_TruongGiaHuy_ReqRes.postman_collection" \
-            -e "ReqRes_Environment.json" \
+          COLLECTION=$(find . -type f -name "2474802010151_TruongGiaHuy_ReqRes.postman_collection" | head -n 1)
+
+          ENV_FILE=$(find . -type f \( -iname "*environment*.json" -o -iname "*.postman_environment" -o -iname "*_Env*" \) | head -n 1)
+
+          if [ -z "$COLLECTION" ]; then
+            echo "ERROR: Collection file not found"
+            exit 1
+          fi
+
+          if [ -z "$ENV_FILE" ]; then
+            echo "ERROR: Environment file not found. Upload the exported Postman Environment to the repository."
+            exit 1
+          fi
+
+          if [ ! -f "users.csv" ]; then
+            echo "ERROR: users.csv not found in repository root"
+            exit 1
+          fi
+
+          echo "Collection: $COLLECTION"
+          echo "Environment: $ENV_FILE"
+
+          newman run "$COLLECTION" \
+            -e "$ENV_FILE" \
             -d users.csv \
             --reporters cli,htmlextra \
             --reporter-htmlextra-export report.html
